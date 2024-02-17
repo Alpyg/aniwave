@@ -4,12 +4,12 @@ const WEBHOOK = "";
 function encodePayload(payload) {
   return Object.entries(payload)
     .map(([key, value]) => `${key}=${value}`)
-    .join("&");
+    .join('&');
 }
 
 async function createRoom() {
-  const payload = {
-    name: "KawaiiBebi",
+  const aniwave_payload = {
+    name: 'KawaiiBebi',
     episode_id: document.querySelector('input[name="episode_id"]').value,
     start_mode: document.querySelector('input[name="start_mode"]').value,
     start_date_timezone: document.querySelector(
@@ -23,29 +23,38 @@ async function createRoom() {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: encodePayload(payload),
+    body: encodePayload(aniwave_payload),
   });
 
   if (res.ok) {
-    sendUrl(res.url);
-  }
-}
-
-async function sendUrl(url) {
-  fetch(`${WEBHOOK}?url=${url}`)
-    .then((res) => {
-      if (res.status == 200) {
-        window.location.href = url;
-        history.pushState({}, "", url);
-      } else {
-        console.log("Aniwave error: ", res);
-        setTimeout(sendUrl(url), 100);
-      }
-    })
-    .catch((err) => {
-      console.error("Aniwave error: ", err);
-      setTimeout(sendUrl(url), 100);
+    await fetch(WEBHOOK, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: 'AniWave',
+        content: '',
+        embeds: [
+          {
+            type: 'rich',
+            title: document.querySelector('.name').innerHTML,
+            description: document.querySelector('.meta > span:first-child').innerHTML,
+            color: 0x5a2e98,
+            image: {
+              url: document.querySelector('.poster img').getAttribute('src'),
+              height: 0,
+              width: 0,
+            },
+            url: res.url,
+          },
+        ],
+      }),
     });
+
+    window.location.href = res.url;
+    history.pushState({}, '', res.url);
+  }
 }
 
 createRoom();
